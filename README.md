@@ -5,7 +5,10 @@
     I3A, University of Zaragoza</p>
     <img width="99%" src="https://github.com/javrtg/AnyCalib/blob/main/assets/method_dark.png?raw=true">
     <p><strong>Camera calibration from a single perspective/edited/distorted image using a freely chosen camera model</strong></p>
-    <p><a href="https://arxiv.org/abs/2503.12701">arXiv</a></p>
+
+  [![arXiv](https://img.shields.io/badge/arXiv-2503.12701-b31b1b?logo=arxiv&style=flat-square)](https://arxiv.org/abs/2503.12701)
+  [![Hugging Face](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-blue?style=flat)](https://huggingface.co/javrtg/AnyCalib)
+
 </div>
 
 
