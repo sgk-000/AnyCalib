@@ -71,7 +71,6 @@ def remove_borders(h: int, w: int, border: int, *tensors):
 
 
 class Calibrator:
-
     def __init__(
         self,
         nonlin_opt_method: str = "gauss_newton",
@@ -220,7 +219,7 @@ class AnyCalib(torch.nn.Module):
 
     def __init__(
         self,
-        model_id: str = "anycalib_pinhole",
+        model_id: str | None = None,
         nonlin_opt_method: str = "gauss_newton",
         nonlin_opt_conf: dict | None = None,
         init_with_sac: bool = False,
@@ -230,11 +229,6 @@ class AnyCalib(torch.nn.Module):
         sample_size: int = -1,
     ):
         super().__init__()
-        if model_id not in self.AVAILABLE_MODELS:
-            raise ValueError(
-                f"Invalid model id: {model_id=}. Available models:\n"
-                "\n".join(self.AVAILABLE_MODELS)
-            )
 
         self.backbone = DINOv2(model_name="dinov2_vitl14")
         self.decoder = LightDPTDecoder(embed_dim=self.backbone.embed_dim)
@@ -249,16 +243,22 @@ class AnyCalib(torch.nn.Module):
             sample_size=sample_size,
         )
 
-        # load pretrained weights
-        url = (
-            f"https://github.com/javrtg/AnyCalib/releases/download/v1.0.0/{model_id}.pt"
-        )
-        model_dir = f"{torch.hub.get_dir()}/anycalib"
-        state_dict = torch.hub.load_state_dict_from_url(
-            url, model_dir, map_location="cpu", file_name=f"{model_id}.pt"
-        )
-        self.load_state_dict(state_dict, strict=True)
-        self.eval()
+        if model_id is not None:
+            # load pretrained weights
+            if model_id not in self.AVAILABLE_MODELS:
+                raise ValueError(
+                    f"Invalid model id: {model_id=}. Available models:\n\n".join(
+                        self.AVAILABLE_MODELS
+                    )
+                )
+
+            url = f"https://github.com/javrtg/AnyCalib/releases/download/v1.0.0/{model_id}.pt"
+            model_dir = f"{torch.hub.get_dir()}/anycalib"
+            state_dict = torch.hub.load_state_dict_from_url(
+                url, model_dir, map_location="cpu", file_name=f"{model_id}.pt"
+            )
+            self.load_state_dict(state_dict, strict=True)
+            self.eval()
 
     def forward(self, data):
         # get ray and FoV fields
@@ -409,4 +409,26 @@ class AnyCalib(torch.nn.Module):
             subs = os.path.commonprefix(list(diff)).rstrip(".")
             print(f"WARNING: Missing {len(diff)} parameters in {subs}: {diff}")
         self.load_state_dict(state_dict, strict=False)
+        return self
+
+    def from_pretrained(self, model_id: str, **calib_kwargs) -> "AnyCalib":
+        """Load a checkpoint from HuggingFace hub"""
+        from huggingface_hub import hf_hub_download
+
+        if model_id not in self.AVAILABLE_MODELS:
+            raise ValueError(
+                f"Invalid model id: {model_id=}. Available models:\n\n".join(
+                    self.AVAILABLE_MODELS
+                )
+            )
+
+        # load pretrained weights
+        ckpt_path = hf_hub_download(
+            repo_id="javrtg/AnyCalib",
+            filename=f"{model_id}.pt",
+            repo_type="model",
+        )
+        state_dict = torch.load(ckpt_path, map_location="cpu", weights_only=True)
+        self.load_state_dict(state_dict, strict=True)
+        self.eval()
         return self

@@ -45,6 +45,10 @@ image = torch.tensor(image, dtype=torch.float32, device=dev).permute(2, 0, 1) / 
 # "anycalib_edit": Trained on edited (stretched and cropped) perspective images.
 model = AnyCalib(model_id="anycalib_pinhole").to(dev)
 
+# Alternatively, the weights can be loaded from the huggingface hub as follows:
+# NOTE: huggingface_hub (https://pypi.org/project/huggingface-hub/) needs to be installed
+# model = AnyCalib().from_pretrained(model_id=<model_id>).to(dev)
+
 # predict according to the desired camera model. Implemented camera models are detailed further below.
 output = model.predict(image, cam_id="pinhole")
 # output is a dictionary with the following key-value pairs:
@@ -56,7 +60,10 @@ output = model.predict(image, cam_id="pinhole")
 #      "pred_size": (H, W) tuple with the image size used by the network. It can be used e.g. for resizing the FoV/ray fields to the original image size.
 # }
 ```
-The weights of the selected `model_id`, if not already downloaded, will be automatically downloaded to the Torch Hub cache directory: `torch.hub.get_dir()`. <br> 
+The weights of the selected `model_id`, if not already downloaded, will be automatically downloaded to the:
+* torch hub cache directory (`torch.hub.get_dir()`) if `AnyCalib(model_id=<model_id>)` is used, or
+* huggingface cache directory if `AnyCalib().from_pretrained(model_id=<model_id>)` is used.
+
 Additional configuration options are indicated in the docstring of `AnyCalib`: 
 <details>
 <summary> <code>help(AnyCalib)</code> </summary>
